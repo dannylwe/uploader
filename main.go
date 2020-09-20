@@ -18,6 +18,7 @@ import (
 
 func main() {
 	model.ConnectDatabase()
+	model.SQLConn()
 	setupRoutes()
 }
 
@@ -97,7 +98,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	// read csv from disk
 	records := readCSV(handler.Filename)
-	// fmt.Println(records)
+	// fmt.Println(records[1:])
 	saveToDatabase(records)
 	return
 }
@@ -150,6 +151,7 @@ func readCSV(filename string) [][]string {
 
 	// parse file
 	r := csv.NewReader(file)
+	r.Comma = ','
 
 	rows, err := r.ReadAll()
 	if err != nil {
@@ -159,16 +161,14 @@ func readCSV(filename string) [][]string {
 }
 
 func saveToDatabase(records [][]string) {
-	stmt, err := model.DB.Begin().Commit().DB().Prepare("INSERT IGNORE INTO sales(region, country, item_type, sales_channel, order_price, order_date, order_id, ship_date, units_sold, unit_price, total_revenue, total_cost, total_profit) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
-	if err != nil {
-		log.Error("Cannot write to database")
-		return
-	}
 	for _, record := range records[1:] {
-		_, err := stmt.Exec(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[11], record[12])
-		if err != nil {
-			log.Error(err)
+		insert := model.Sales{record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[11], record[12]}
+		result := model.DB.Create(&insert)
+		if result.Error != nil {
+			log.Error(result.Error)
 		}
 	}
 	log.Info("Completed saving recoreds")
+	defer model.DB.Close()
+	return
 }

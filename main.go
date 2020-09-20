@@ -8,11 +8,17 @@ import (
 
 
 func main() {
-	http.HandleFunc("/upload", uploadHandler)
-
-	http.ListenAndServe(":9000", nil)
+	setupRoutes()
 }
 
+func setupRoutes() {
+	PORT := ":9000"
+	fmt.Println("Starting application on port" + PORT)
+	
+	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/", redirectToUpload)
+	http.ListenAndServe(PORT, nil)
+}
 // compile template
 var templates = template.Must(template.ParseFiles("public/upload.html"))
 
@@ -32,4 +38,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Uploading File")
+}
+
+func redirectToUpload(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/upload", http.StatusSeeOther)
 }

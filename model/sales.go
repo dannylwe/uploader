@@ -1,6 +1,9 @@
 package model
 
-type sales struct {
+import "github.com/jinzhu/gorm"
+
+type Sales struct {
+	gorm.Model
 	Region       string
 	Country      string
 	ItemType     string

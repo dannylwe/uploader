@@ -44,7 +44,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	var maxUploadSize int64
-	maxUploadSize = 7 * 1024
+	maxUploadSize = 7 * 1024000
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		fmt.Printf("Could not parse multipart form: %v\n", err)
     	renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
@@ -100,7 +100,7 @@ func renderError(w http.ResponseWriter, message string, statusCode int) {
 }
 
 func validateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {
-	if(fileSize > maxSize/100000) {
+	if(fileSize > maxSize) {
 		renderError(w, "File Too Large", http.StatusRequestEntityTooLarge)
 		fmt.Println(fileSize, maxSize/100000)
 		return errors.New("File too big")

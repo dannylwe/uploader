@@ -37,9 +37,30 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Uploading File")
+	maxUploadSize := 2 * 1024
+	if err := r.ParseMultipartForm(int64(maxUploadSize)); err != nil {
+		fmt.Printf("Could not parse multipart form: %v\n", err)
+    	renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
+    	return
+	}
+
+	file, handler, err := r.FormFile("myFile")
+	if err != nil {
+		fmt.Printf("Error. Cannot get File %v\n", err)
+		return
+	}
+
+	defer file.Close()
+	fmt.Printf("Uploaded File: %v", handler.Filename)
+	fmt.Printf("File Size: %v", handler.Size)
+	fmt.Printf("MIME Header: %v\n", handler.Header)
 }
 
 func redirectToUpload(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/upload", http.StatusSeeOther)
+}
+
+func renderError(w http.ResponseWriter, message string, statusCode int) {
+	w.WriteHeader(statusCode)
+	w.Write([]byte(message))
 }

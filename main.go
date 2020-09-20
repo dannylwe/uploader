@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"text/template"
 )
 
@@ -12,7 +15,7 @@ func main() {
 }
 
 func setupRoutes() {
-	PORT := ":9000"
+	PORT := ":8080"
 	fmt.Println("Starting application on port" + PORT)
 	
 	http.HandleFunc("/upload", uploadHandler)
@@ -37,8 +40,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
-	maxUploadSize := 2 * 1024
-	if err := r.ParseMultipartForm(int64(maxUploadSize)); err != nil {
+	var maxUploadSize int64
+	maxUploadSize = 7 * 1024
+	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		fmt.Printf("Could not parse multipart form: %v\n", err)
     	renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
     	return
@@ -50,10 +54,32 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validateFileSize(handler.Size, maxUploadSize, w); err != nil {
+		fmt.Printf("%v\n", err)
+		return;
+	}
+
 	defer file.Close()
-	fmt.Printf("Uploaded File: %v", handler.Filename)
-	fmt.Printf("File Size: %v", handler.Size)
+	fmt.Printf("Uploaded File: %v\n", handler.Filename)
+	fmt.Printf("File Size: %v\n", handler.Size)
 	fmt.Printf("MIME Header: %v\n", handler.Header)
+
+	// create file
+	dst, err := os.Create(handler.Filename)
+	defer dst.Close()
+	if err != nil {
+		renderError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// save file to disk
+	if _, err := io.Copy(dst, file); err != nil {
+		renderError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "Successfully Uploaded file")
+	return
 }
 
 func redirectToUpload(w http.ResponseWriter, r *http.Request) {
@@ -63,4 +89,12 @@ func redirectToUpload(w http.ResponseWriter, r *http.Request) {
 func renderError(w http.ResponseWriter, message string, statusCode int) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(message))
+}
+
+func validateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {
+	if(fileSize > maxSize) {
+		renderError(w, "File Too Large", http.StatusRequestEntityTooLarge)
+		return errors.New("File too big")
+	}
+	return nil
 }

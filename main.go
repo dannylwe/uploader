@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+
+	log "github.com/sirupsen/logrus" 
 )
 
 
@@ -19,7 +21,7 @@ func main() {
 
 func setupRoutes() {
 	PORT := ":8080"
-	fmt.Println("Starting application on port" + PORT)
+	log.Info("Starting application on port" + PORT)
 	
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", redirectToUpload)
@@ -44,7 +46,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	var maxUploadSize int64
-	maxUploadSize = 7 * 1024000
+	maxUploadSize = 15 * 1024000
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		fmt.Printf("Could not parse multipart form: %v\n", err)
     	renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
@@ -57,21 +59,20 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if err := confirmFileType(file, w); err != nil {
-	// 	fmt.Printf("%v", err)
-	// 	return
-	// }
+	// check file type
+	err = confirmFileType(file, w)
+	if err != nil {
+		log.Warn(err)
+		return
+	}
 
-	if err := validateFileSize(handler.Size, maxUploadSize, w); err != nil {
-		fmt.Printf("%v\n", err)
-		return;
+	if err = validateFileSize(handler.Size, maxUploadSize, w); err != nil {
+		log.Warn(err)
+		return
 	}
 
 	defer file.Close()
-	fmt.Printf("Uploaded File: %v\n", handler.Filename)
-	fmt.Printf("File Size: %v\n", handler.Size)
-	fmt.Printf("MIME Header: %v\n", handler.Header)
-
+	
 	// create file
 	dst, err := os.Create(handler.Filename)
 	defer dst.Close()
@@ -87,6 +88,10 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Successfully Uploaded file")
+	log.Info("Uploaded file " + handler.Filename)
+	log.Info("Header size")
+	log.Info(handler.Size)
+	// log.Info("MIME Header" + string(handler.Header))
 	return
 }
 
@@ -102,7 +107,6 @@ func renderError(w http.ResponseWriter, message string, statusCode int) {
 func validateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {
 	if(fileSize > maxSize) {
 		renderError(w, "File Too Large", http.StatusRequestEntityTooLarge)
-		fmt.Println(fileSize, maxSize/100000)
 		return errors.New("File too big")
 	}
 	return nil
@@ -117,15 +121,18 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 
 	// check file type
 	detectedFileType := http.DetectContentType(fileBytes)
-	if(detectedFileType != "text/csv" && detectedFileType != "application/vnd.ms-excel") {
-		renderError(w, "INVALID_FILE_TYPE\n", http.StatusBadRequest)
-		return err
+	if detectedFileType == "image/jpeg" || detectedFileType == "image/jpg" || detectedFileType == "image/gif" || detectedFileType == "image/png" || detectedFileType == "application/pdf"|| detectedFileType == "application/x-httpd-php" || detectedFileType == "text/plain" {
+    	renderError(w, "INVALID_FILE_TYPE", http.StatusBadRequest)
+		return errors.New("Invalid format")
 	}
 
-	_, err = mime.ExtensionsByType(detectedFileType)
+
+	types, err := mime.ExtensionsByType(detectedFileType)
 	if err != nil {
 		renderError(w, "CANT_READ_FILE_TYPE", http.StatusInternalServerError)
 		return err
 	}
+	log.Info("File Type " + detectedFileType)
+	log.Info(types)
 	return nil
 }

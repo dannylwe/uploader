@@ -19,7 +19,7 @@ import (
 
 func main() {
 	model.ConnectDatabase()
-	// model.SQLConn()
+	model.SQLConn()
 	setupRoutes()
 }
 
@@ -30,6 +30,7 @@ func setupRoutes() {
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", redirectToUpload)
 	http.HandleFunc("/records", getAllRecords)
+	http.HandleFunc("/profit", getProfitsByDate)
 	http.ListenAndServe(PORT, nil)
 }
 
@@ -185,7 +186,7 @@ func getAllRecords(w http.ResponseWriter, r *http.Request) {
 	log.Info("Getting all records, limit 10")
 	limit := 10
 	var sales []model.Sales
-	if err := model.DB.Order("order_date").Limit(limit).Find(&sales).Error; err != nil {
+	if err := model.DB.Order("order_date desc").Limit(limit).Find(&sales).Error; err != nil {
 		log.Error(err)
 		return
 	}
@@ -193,5 +194,20 @@ func getAllRecords(w http.ResponseWriter, r *http.Request) {
 	returnObject, _ := json.Marshal(sales)
 	w.Header().Set("Content-Type", "application/json")
   	w.Write(returnObject)
+	return
+}
+
+func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
+	log.Info("get profits by date range, limit 10")
+
+	type Profit struct {
+		Profit string `json:"totalProfit"`
+	}
+	var profit Profit
+	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
+	
+	returnObject, _ := json.Marshal(profit)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(returnObject)
 	return
 }

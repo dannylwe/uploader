@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	// need mysql connection
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	log "github.com/sirupsen/logrus"
 )
@@ -22,6 +23,9 @@ func ConnectDatabase() {
 
 	database.AutoMigrate(&Sales{})
 	DB = database
+	DB.DB().SetMaxIdleConns(10)
+	DB.DB().SetMaxOpenConns(100)
+	DB.DB().SetConnMaxLifetime(15 * time.Minute)
 }
 
 // SQLConn Create connection to dabase to run RAW query

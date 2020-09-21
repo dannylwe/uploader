@@ -18,7 +18,7 @@ import (
 
 func main() {
 	model.ConnectDatabase()
-	model.SQLConn()
+	// model.SQLConn()
 	setupRoutes()
 }
 
@@ -161,9 +161,15 @@ func readCSV(filename string) [][]string {
 }
 
 func saveToDatabase(records [][]string) {
+	log.Info("saving to database....")
 	for _, record := range records[1:] {
-		insert := model.Sales{record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[11], record[12]}
-		result := model.DB.Create(&insert)
+		insertRecord := model.Sales{
+			Region:record[0], Country:record[1], ItemType:record[2], SalesChannel:record[3], 
+			OrderPrice:record[4], OrderDate:record[5], OrderID:record[6], ShipDate:record[7], 
+			UnitsSold:record[8], UnitPrice:record[9], TotalRevenue:record[10], TotalCost:record[11], 
+			TotalProfit:record[12]}
+			
+		result := model.DB.Create(&insertRecord)
 		if result.Error != nil {
 			log.Error(result.Error)
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -11,35 +12,38 @@ import (
 	"os"
 	"text/template"
 
-	log "github.com/sirupsen/logrus" 
+	log "github.com/sirupsen/logrus"
+	"github.com/danny/services/model"
 )
 
-
 func main() {
+	model.ConnectDatabase()
+	// model.SQLConn()
 	setupRoutes()
 }
 
 func setupRoutes() {
 	PORT := ":8080"
 	log.Info("Starting application on port" + PORT)
-	
+
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", redirectToUpload)
 	http.ListenAndServe(PORT, nil)
 }
+
 // compile template
 var templates = template.Must(template.ParseFiles("public/upload.html"))
 
 // Display template
 func display(w http.ResponseWriter, page string, data interface{}) {
-	templates.ExecuteTemplate(w, page + ".html", data)
+	templates.ExecuteTemplate(w, page+".html", data)
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		display(w, "upload", nil)
-	case "POST":
+	case http.MethodPost:
 		uploadFile(w, r)
 	}
 }
@@ -49,8 +53,8 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	maxUploadSize = 15 * 1024000
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		fmt.Printf("Could not parse multipart form: %v\n", err)
-    	renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
-    	return
+		renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
+		return
 	}
 
 	file, handler, err := r.FormFile("myFile")
@@ -59,12 +63,12 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check file type
-	err = confirmFileType(file, w)
-	if err != nil {
-		log.Warn(err)
-		return
-	}
+	// TODO: check file type
+	// err = confirmFileType(file, w)
+	// if err != nil {
+	// 	log.Warn(err)
+	// 	return
+	// }
 
 	if err = validateFileSize(handler.Size, maxUploadSize, w); err != nil {
 		log.Warn(err)
@@ -72,7 +76,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer file.Close()
-	
+
 	// create file
 	dst, err := os.Create(handler.Filename)
 	defer dst.Close()
@@ -91,7 +95,11 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Info("Uploaded file " + handler.Filename)
 	log.Info("Header size")
 	log.Info(handler.Size)
-	// log.Info("MIME Header" + string(handler.Header))
+
+	// read csv from disk
+	records := readCSV(handler.Filename)
+	// fmt.Println(records[1:])
+	saveToDatabase(records)
 	return
 }
 
@@ -105,7 +113,7 @@ func renderError(w http.ResponseWriter, message string, statusCode int) {
 }
 
 func validateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {
-	if(fileSize > maxSize) {
+	if fileSize > maxSize {
 		renderError(w, "File Too Large", http.StatusRequestEntityTooLarge)
 		return errors.New("File too big")
 	}
@@ -121,11 +129,6 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 
 	// check file type
 	detectedFileType := http.DetectContentType(fileBytes)
-	if detectedFileType == "image/jpeg" || detectedFileType == "image/jpg" || detectedFileType == "image/gif" || detectedFileType == "image/png" || detectedFileType == "application/pdf"|| detectedFileType == "application/x-httpd-php" || detectedFileType == "text/plain" {
-    	renderError(w, "INVALID_FILE_TYPE", http.StatusBadRequest)
-		return errors.New("Invalid format")
-	}
-
 
 	types, err := mime.ExtensionsByType(detectedFileType)
 	if err != nil {
@@ -135,4 +138,43 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	log.Info("File Type " + detectedFileType)
 	log.Info(types)
 	return nil
+}
+
+func readCSV(filename string) [][]string {
+	log.Info("reading csv file " + filename)
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+
+	// parse file
+	r := csv.NewReader(file)
+	r.Comma = ','
+
+	rows, err := r.ReadAll()
+	if err != nil {
+		log.Error(err)
+	}
+	return rows
+}
+
+func saveToDatabase(records [][]string) {
+	log.Info("saving to database....")
+	for _, record := range records[1:] {
+		insertRecord := model.Sales{
+			Region:record[0], Country:record[1], ItemType:record[2], SalesChannel:record[3], 
+			OrderPrice:record[4], OrderDate:record[5], OrderID:record[6], ShipDate:record[7], 
+			UnitsSold:record[8], UnitPrice:record[9], TotalRevenue:record[10], TotalCost:record[11], 
+			TotalProfit:record[12]}
+			
+		result := model.DB.Create(&insertRecord)
+		if result.Error != nil {
+			log.Error(result.Error)
+		}
+	}
+	log.Info("Completed saving recoreds")
+	defer model.DB.Close()
+	return
 }

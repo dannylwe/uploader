@@ -164,10 +164,7 @@ func getAllRecords(w http.ResponseWriter, r *http.Request) {
 func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 	log.Info("get profits by date range, limit 10")
 
-	type Profit struct {
-		Profit string `json:"totalProfit"`
-	}
-	var profit Profit
+	var profit model.Profit
 	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
 	
 	returnObject, _ := json.Marshal(profit)
@@ -179,12 +176,7 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 	log.Info("get top five profitable items")
 
-	type TopProfitable struct {
-		Name string `json:"name"`
-		Profit string `json:"profit"`
-	}
-
-	var profit []TopProfitable
+	var profit []model.TopProfitable
 	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
 
 	returnObject, _ := json.Marshal(profit)

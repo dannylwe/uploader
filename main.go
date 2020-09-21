@@ -31,6 +31,7 @@ func setupRoutes() {
 	http.HandleFunc("/", redirectToUpload)
 	http.HandleFunc("/records", getAllRecords)
 	http.HandleFunc("/profit", getProfitsByDate)
+	http.HandleFunc("/topfive", getTopFiveProfitableItems)
 	http.ListenAndServe(PORT, nil)
 }
 
@@ -206,6 +207,23 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 	var profit Profit
 	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
 	
+	returnObject, _ := json.Marshal(profit)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(returnObject)
+	return
+}
+
+func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
+	log.Info("get top five profitable items")
+
+	type TopProfitable struct {
+		Name string `json:"name"`
+		Profit string `json:"profit"`
+	}
+
+	var profit []TopProfitable
+	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+
 	returnObject, _ := json.Marshal(profit)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(returnObject)

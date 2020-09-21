@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/danny/services/model"
+	"github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -100,10 +100,12 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Info("Header size")
 	log.Info(handler.Size)
 
-	// read csv from disk
-	records := readCSV(handler.Filename)
-	// fmt.Println(records[1:])
-	saveToDatabase(records)
+	filePath := "./" + handler.Filename
+	mysql.RegisterLocalFile(filePath)
+	err = model.DB.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' REPLACE INTO TABLE sales FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES").Error
+	if err != nil {
+		log.Error("Could not load csv file to database")
+	}
 	return
 }
 
@@ -144,45 +146,6 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	return nil
 }
 
-func readCSV(filename string) [][]string {
-	log.Info("reading csv file " + filename)
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer file.Close()
-
-	// parse file
-	r := csv.NewReader(file)
-	r.Comma = ','
-
-	rows, err := r.ReadAll()
-	if err != nil {
-		log.Error(err)
-	}
-	return rows
-}
-
-func saveToDatabase(records [][]string) {
-	log.Info("saving to database....")
-	for _, record := range records[1:] {
-		insertRecord := model.Sales{
-			Region:record[0], Country:record[1], ItemType:record[2], SalesChannel:record[3], 
-			OrderPrice:record[4], OrderDate:record[5], OrderID:record[6], ShipDate:record[7], 
-			UnitsSold:record[8], UnitPrice:record[9], TotalRevenue:record[10], TotalCost:record[11], 
-			TotalProfit:record[12]}
-			
-		result := model.DB.Create(&insertRecord)
-		if result.Error != nil {
-			log.Error(result.Error)
-		}
-	}
-	log.Info("Completed saving recoreds")
-	defer model.DB.Close()
-	return
-}
-
 func getAllRecords(w http.ResponseWriter, r *http.Request) {
 	log.Info("Getting all records, limit 10")
 	limit := 10
@@ -201,10 +164,7 @@ func getAllRecords(w http.ResponseWriter, r *http.Request) {
 func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 	log.Info("get profits by date range, limit 10")
 
-	type Profit struct {
-		Profit string `json:"totalProfit"`
-	}
-	var profit Profit
+	var profit model.Profit
 	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
 	
 	returnObject, _ := json.Marshal(profit)
@@ -216,12 +176,7 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 	log.Info("get top five profitable items")
 
-	type TopProfitable struct {
-		Name string `json:"name"`
-		Profit string `json:"profit"`
-	}
-
-	var profit []TopProfitable
+	var profit []model.TopProfitable
 	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
 
 	returnObject, _ := json.Marshal(profit)

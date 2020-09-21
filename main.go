@@ -12,6 +12,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/danny/services/common"
 	"github.com/danny/services/model"
 	"github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
@@ -168,9 +169,7 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
 	
 	returnObject, _ := json.Marshal(profit)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(returnObject)
-	return
+	common.JsonResponse(w, returnObject)
 }
 
 func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +179,5 @@ func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
 
 	returnObject, _ := json.Marshal(profit)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(returnObject)
-	return
+	common.JsonResponse(w, returnObject)
 }

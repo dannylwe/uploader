@@ -11,7 +11,6 @@ func SetupRoutes() {
 	PORT := ":8080"
 	log.Info("Starting application on port" + PORT)
 
-
 	http.HandleFunc("/upload", UploadHandler)
 	http.HandleFunc("/", RedirectToUpload)
 	http.HandleFunc("/records", GetAllRecords)

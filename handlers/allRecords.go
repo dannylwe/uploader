@@ -20,6 +20,6 @@ func GetAllRecords(w http.ResponseWriter, r *http.Request) {
 	log.Info("get all records limit 10 SUCCESS")
 	returnObject, _ := json.Marshal(sales)
 	w.Header().Set("Content-Type", "application/json")
-  	w.Write(returnObject)
+	w.Write(returnObject)
 	return
 }

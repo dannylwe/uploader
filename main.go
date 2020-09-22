@@ -1,12 +1,7 @@
 package main
 
-import (
-	"github.com/danny/services/handlers"
-	"github.com/danny/services/model"
-)
+import "github.com/danny/services/config"
 
 func main() {
-	model.ConnectDatabase()
-	model.SQLConn()
-	handlers.SetupRoutes()
+	config.Run()
 }

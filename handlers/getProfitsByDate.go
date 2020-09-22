@@ -16,7 +16,7 @@ func GetProfitsByDate(w http.ResponseWriter, r *http.Request) {
 		log.Info("get profits by date range, limit 10")
 
 		var date model.Dates
-		const dbISOLAyout string= "2006-01-02"
+		const dbISOLAyout string = "2006-01-02"
 		err := json.NewDecoder(r.Body).Decode(&date)
 
 		from, _ := time.Parse(dbISOLAyout, date.StartDate)
@@ -26,9 +26,9 @@ func GetProfitsByDate(w http.ResponseWriter, r *http.Request) {
 			log.Error(err)
 			return
 		}
-	
+
 		var profit model.Profit
-		
+
 		err = model.Db.QueryRow("SELECT SUM(total_profit) AS profit FROM sales WHERE order_date BETWEEN ? AND ?", from, to).Scan(&profit.Profit)
 		if err != nil {
 			log.Error(err)
@@ -38,7 +38,7 @@ func GetProfitsByDate(w http.ResponseWriter, r *http.Request) {
 		returnObject, _ := json.Marshal(profit)
 		common.JsonResponse(w, returnObject)
 		return
-		
+
 	}
 	log.Info("Invalid HTTP method accessed")
 	common.RenderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)

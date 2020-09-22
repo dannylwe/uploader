@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	var maxUploadSize int64
 	maxUploadSize = 15 * 1024000

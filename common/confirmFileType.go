@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// confirmFileType reads the file type 
+// confirmFileType reads the file type
 func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {

@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"net/http"
 	"github.com/danny/services/common"
+	"net/http"
 )
-
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

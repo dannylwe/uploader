@@ -2,7 +2,8 @@ package common
 
 import (
 	"errors"
-	"net/http")
+	"net/http"
+)
 
 // ValidateFileSize validates the size of the file
 func ValidateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {

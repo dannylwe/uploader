@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"text/template"
-	"time"
 
 	"github.com/danny/services/common"
 	"github.com/danny/services/handlers"
@@ -33,8 +31,8 @@ func setupRoutes() {
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", handlers.RedirectToUpload)
 	http.HandleFunc("/records", handlers.GetAllRecords)
-	http.HandleFunc("/profit", getProfitsByDate)
-	http.HandleFunc("/topfive", getTopFiveProfitableItems)
+	http.HandleFunc("/profit", handlers.GetProfitsByDate)
+	http.HandleFunc("/topfive", handlers.GetTopFiveProfitableItems)
 	http.ListenAndServe(PORT, nil)
 }
 
@@ -130,85 +128,4 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	log.Info("File Type " + detectedFileType)
 	log.Info(types)
 	return nil
-}
-
-
-
-func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		log.Info("get profits by date range, limit 10")
-
-		var date model.Dates
-		const dbISOLAyout string= "2006-01-02"
-		err := json.NewDecoder(r.Body).Decode(&date)
-
-		from, _ := time.Parse(dbISOLAyout, date.StartDate)
-		to, _ := time.Parse(dbISOLAyout, date.EndDate)
-
-		if err != nil {
-			log.Error(err)
-			return
-		}
-	
-		var profit model.Profit
-		
-		err = model.Db.QueryRow("SELECT SUM(total_profit) AS profit FROM sales WHERE order_date BETWEEN ? AND ?", from, to).Scan(&profit.Profit)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		returnObject, _ := json.Marshal(profit)
-		common.JsonResponse(w, returnObject)
-		return
-		
-	}
-	log.Info("Invalid HTTP method accessed")
-	common.RenderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
-	return
-}
-
-func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		
-		var date model.Dates
-		const dbISOLAyout string= "2006-01-02"
-		err := json.NewDecoder(r.Body).Decode(&date)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		fmt.Println(date)
-		log.Info("get top five profitable items")
-
-		var profit []model.TopProfitable
-
-		from, _ := time.Parse(dbISOLAyout, date.StartDate)
-		to, _ := time.Parse(dbISOLAyout, date.EndDate)
-	
-		rows, err := model.Db.Query("select item_type AS name, ROUND(SUM(total_profit), 2) AS profit from sales WHERE order_date BETWEEN ? AND ? GROUP BY item_type ORDER BY Profit DESC limit 5", from, to)
-		if err != nil {
-			fmt.Println(err)
-		}
-		for rows.Next() {
-			var name string
-			var profitable float64
-			err = rows.Scan(&name, &profitable)
-			if err != nil {
-				log.Error(err)
-			}
-			total := model.TopProfitable{Name:name, Profit:profitable}
-			profit = append(profit, total)
-		}
-
-		returnObject, err := json.Marshal(profit)
-		if err != nil {
-			fmt.Println(err)
-		}
-		common.JsonResponse(w, returnObject)
-		return
-	}
-	log.Info("Invalid HTTP method accessed")
-	common.RenderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
 }

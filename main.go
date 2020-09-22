@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,13 +13,11 @@ import (
 	"time"
 
 	"github.com/danny/services/common"
+	"github.com/danny/services/handlers"
 	"github.com/danny/services/model"
 	"github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 )
-
-func init() {
-}
 
 func main() {
 	model.ConnectDatabase()
@@ -34,8 +31,8 @@ func setupRoutes() {
 
 
 	http.HandleFunc("/upload", uploadHandler)
-	http.HandleFunc("/", redirectToUpload)
-	http.HandleFunc("/records", getAllRecords)
+	http.HandleFunc("/", handlers.RedirectToUpload)
+	http.HandleFunc("/records", handlers.GetAllRecords)
 	http.HandleFunc("/profit", getProfitsByDate)
 	http.HandleFunc("/topfive", getTopFiveProfitableItems)
 	http.ListenAndServe(PORT, nil)
@@ -63,7 +60,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	maxUploadSize = 15 * 1024000
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		fmt.Printf("Could not parse multipart form: %v\n", err)
-		renderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
+		common.RenderError(w, "CANT_PARSE_FORM", http.StatusInternalServerError)
 		return
 	}
 
@@ -80,7 +77,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	if err = validateFileSize(handler.Size, maxUploadSize, w); err != nil {
+	if err = common.ValidateFileSize(handler.Size, maxUploadSize, w); err != nil {
 		log.Warn(err)
 		return
 	}
@@ -91,13 +88,13 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	dst, err := os.Create(handler.Filename)
 	defer dst.Close()
 	if err != nil {
-		renderError(w, err.Error(), http.StatusInternalServerError)
+		common.RenderError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// save file to disk
 	if _, err := io.Copy(dst, file); err != nil {
-		renderError(w, err.Error(), http.StatusInternalServerError)
+		common.RenderError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -115,27 +112,10 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func redirectToUpload(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/upload", http.StatusSeeOther)
-}
-
-func renderError(w http.ResponseWriter, message string, statusCode int) {
-	w.WriteHeader(statusCode)
-	w.Write([]byte(message))
-}
-
-func validateFileSize(fileSize, maxSize int64, w http.ResponseWriter) error {
-	if fileSize > maxSize {
-		renderError(w, "File Too Large", http.StatusRequestEntityTooLarge)
-		return errors.New("File too big")
-	}
-	return nil
-}
-
 func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		renderError(w, "INVALID_FILE\n", http.StatusBadRequest)
+		common.RenderError(w, "INVALID_FILE\n", http.StatusBadRequest)
 		return err
 	}
 
@@ -144,7 +124,7 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 
 	types, err := mime.ExtensionsByType(detectedFileType)
 	if err != nil {
-		renderError(w, "CANT_READ_FILE_TYPE", http.StatusInternalServerError)
+		common.RenderError(w, "CANT_READ_FILE_TYPE", http.StatusInternalServerError)
 		return err
 	}
 	log.Info("File Type " + detectedFileType)
@@ -152,20 +132,7 @@ func confirmFileType(file multipart.File, w http.ResponseWriter) error {
 	return nil
 }
 
-func getAllRecords(w http.ResponseWriter, r *http.Request) {
-	log.Info("Getting all records, limit 10")
-	limit := 10
-	var sales []model.Sales
-	if err := model.DB.Order("order_date desc").Limit(limit).Find(&sales).Error; err != nil {
-		log.Error(err)
-		return
-	}
-	log.Info("get all records limit 10 SUCCESS")
-	returnObject, _ := json.Marshal(sales)
-	w.Header().Set("Content-Type", "application/json")
-  	w.Write(returnObject)
-	return
-}
+
 
 func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -197,7 +164,7 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 		
 	}
 	log.Info("Invalid HTTP method accessed")
-	renderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
+	common.RenderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
 	return
 }
 
@@ -243,5 +210,5 @@ func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Info("Invalid HTTP method accessed")
-	renderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
+	common.RenderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	"github.com/danny/services/common"
 	"github.com/danny/services/model"
@@ -193,16 +194,45 @@ func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println(date)
 		log.Info("get top five profitable items")
-	
+
+		const dbISOLAyout string= "2006-01-02"
 		var profit []model.TopProfitable
-		var sale []model.Sales
-		// model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
-		model.DB.Raw("select * from sales").Scan(&sale)
+
+		from, _ := time.Parse(dbISOLAyout, date.StartDate)
+		to, _ := time.Parse(dbISOLAyout, date.EndDate)
+		// var sale []model.Sales
+		// // model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+		// model.DB.Raw("select * from sales limit 10").Scan(&sale)
 		
+		// returnObject, err := json.Marshal(sale)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+		// common.JsonResponse(w, returnObject)
+		// return
+
+		rows, err := model.Db.Query("select item_type AS name, ROUND(SUM(total_profit), 2) AS profit from sales WHERE order_date BETWEEN ? AND ? GROUP BY item_type ORDER BY Profit DESC limit 5", from, to)
+		if err != nil {
+			fmt.Println(err)
+		}
+		for rows.Next() {
+			var name string
+			var profitable float64
+			err = rows.Scan(&name, &profitable)
+			if err != nil {
+				log.Error(err)
+			}
+			total := model.TopProfitable{Name:name, Profit:profitable}
+			profit = append(profit, total)
+		}
+
 		returnObject, err := json.Marshal(profit)
 		if err != nil {
 			fmt.Println(err)
 		}
 		common.JsonResponse(w, returnObject)
+		return
 	}
+	log.Info("Invalid HTTP method accessed")
+	renderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
 }

@@ -2,5 +2,5 @@ package model
 
 type TopProfitable struct {
 	Name string `json:"name"`
-	Profit string `json:"profit"`
+	Profit float64 `json:"profit"`
 }

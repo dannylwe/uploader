@@ -11,12 +11,16 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	"github.com/danny/services/common"
 	"github.com/danny/services/model"
 	"github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+}
 
 func main() {
 	model.ConnectDatabase()
@@ -27,6 +31,7 @@ func main() {
 func setupRoutes() {
 	PORT := ":8080"
 	log.Info("Starting application on port" + PORT)
+
 
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", redirectToUpload)
@@ -103,7 +108,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	filePath := "./" + handler.Filename
 	mysql.RegisterLocalFile(filePath)
-	err = model.DB.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' REPLACE INTO TABLE sales FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES").Error
+	err = model.DB.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' REPLACE INTO TABLE sales FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (region, country, item_type, sales_channel,order_priority, @order_date,order_id ,ship_date,units_sold, unit_price, unit_cost, total_revenue, total_cost, total_profit) SET order_date = STR_TO_DATE(@order_date, '%m/%d/%Y')").Error
 	if err != nil {
 		log.Error("Could not load csv file to database")
 	}
@@ -163,21 +168,80 @@ func getAllRecords(w http.ResponseWriter, r *http.Request) {
 }
 
 func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
-	log.Info("get profits by date range, limit 10")
+	if r.Method == http.MethodPost {
+		log.Info("get profits by date range, limit 10")
 
-	var profit model.Profit
-	model.DB.Raw("SELECT SUM(total_profit) AS profit FROM sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19)").Scan(&profit)
+		var date model.Dates
+		const dbISOLAyout string= "2006-01-02"
+		err := json.NewDecoder(r.Body).Decode(&date)
+
+		from, _ := time.Parse(dbISOLAyout, date.StartDate)
+		to, _ := time.Parse(dbISOLAyout, date.EndDate)
+
+		if err != nil {
+			log.Error(err)
+			return
+		}
 	
-	returnObject, _ := json.Marshal(profit)
-	common.JsonResponse(w, returnObject)
+		var profit model.Profit
+		
+		err = model.Db.QueryRow("SELECT SUM(total_profit) AS profit FROM sales WHERE order_date BETWEEN ? AND ?", from, to).Scan(&profit.Profit)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		returnObject, _ := json.Marshal(profit)
+		common.JsonResponse(w, returnObject)
+		return
+		
+	}
+	log.Info("Invalid HTTP method accessed")
+	renderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
+	return
 }
 
 func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
-	log.Info("get top five profitable items")
+	if r.Method == http.MethodPost {
+		
+		var date model.Dates
+		const dbISOLAyout string= "2006-01-02"
+		err := json.NewDecoder(r.Body).Decode(&date)
+		if err != nil {
+			log.Error(err)
+			return
+		}
 
-	var profit []model.TopProfitable
-	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+		fmt.Println(date)
+		log.Info("get top five profitable items")
 
-	returnObject, _ := json.Marshal(profit)
-	common.JsonResponse(w, returnObject)
+		var profit []model.TopProfitable
+
+		from, _ := time.Parse(dbISOLAyout, date.StartDate)
+		to, _ := time.Parse(dbISOLAyout, date.EndDate)
+	
+		rows, err := model.Db.Query("select item_type AS name, ROUND(SUM(total_profit), 2) AS profit from sales WHERE order_date BETWEEN ? AND ? GROUP BY item_type ORDER BY Profit DESC limit 5", from, to)
+		if err != nil {
+			fmt.Println(err)
+		}
+		for rows.Next() {
+			var name string
+			var profitable float64
+			err = rows.Scan(&name, &profitable)
+			if err != nil {
+				log.Error(err)
+			}
+			total := model.TopProfitable{Name:name, Profit:profitable}
+			profit = append(profit, total)
+		}
+
+		returnObject, err := json.Marshal(profit)
+		if err != nil {
+			fmt.Println(err)
+		}
+		common.JsonResponse(w, returnObject)
+		return
+	}
+	log.Info("Invalid HTTP method accessed")
+	renderError(w, "INVALID_METHOD", http.StatusMethodNotAllowed)
 }

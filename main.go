@@ -18,6 +18,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func init() {
+}
+
 func main() {
 	model.ConnectDatabase()
 	model.SQLConn()
@@ -27,6 +30,7 @@ func main() {
 func setupRoutes() {
 	PORT := ":8080"
 	log.Info("Starting application on port" + PORT)
+
 
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/", redirectToUpload)
@@ -103,7 +107,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	filePath := "./" + handler.Filename
 	mysql.RegisterLocalFile(filePath)
-	err = model.DB.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' REPLACE INTO TABLE sales FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES").Error
+	err = model.DB.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' REPLACE INTO TABLE sales FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (country, region, item_type, sales_channel,order_priority, @order_date,order_id ,ship_date,units_sold, unit_price, unit_cost, total_revenue, total_cost, total_profit) SET order_date = STR_TO_DATE(@order_date, '%m/%d/%Y')").Error
 	if err != nil {
 		log.Error("Could not load csv file to database")
 	}
@@ -191,10 +195,14 @@ func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
 		log.Info("get top five profitable items")
 	
 		var profit []model.TopProfitable
+		var sale []model.Sales
 		// model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
-		model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) >= 2016-09-09 AND DATE(order_date) <= 2016-10-19 GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
-
-		returnObject, _ := json.Marshal(profit)
+		model.DB.Raw("select * from sales").Scan(&sale)
+		
+		returnObject, err := json.Marshal(profit)
+		if err != nil {
+			fmt.Println(err)
+		}
 		common.JsonResponse(w, returnObject)
 	}
 }

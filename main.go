@@ -173,11 +173,28 @@ func getProfitsByDate(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTopFiveProfitableItems(w http.ResponseWriter, r *http.Request) {
-	log.Info("get top five profitable items")
+	if r.Method == http.MethodPost {
+		
+		type Dates struct {
+			StartDate string `json:"startDate"`
+			EndDate string `json:"endDate"`
+		}
 
-	var profit []model.TopProfitable
-	model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+		var date Dates
+		err := json.NewDecoder(r.Body).Decode(&date)
+		if err != nil {
+			log.Error(err)
+			return
+		}
 
-	returnObject, _ := json.Marshal(profit)
-	common.JsonResponse(w, returnObject)
+		fmt.Println(date)
+		log.Info("get top five profitable items")
+	
+		var profit []model.TopProfitable
+		// model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) BETWEEN DATE(2016-09-09) AND DATE(2016-10-19) GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+		model.DB.Raw("select item_type AS name, ROUND(sum(total_profit), 2) AS profit from sales WHERE DATE(order_date) >= 2016-09-09 AND DATE(order_date) <= 2016-10-19 GROUP BY item_type ORDER BY Profit DESC limit 5").Scan(&profit)
+
+		returnObject, _ := json.Marshal(profit)
+		common.JsonResponse(w, returnObject)
+	}
 }

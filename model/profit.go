@@ -1,5 +1,5 @@
 package model
 
 type Profit struct {
-	Profit string `json:"totalProfit"`
+	Profit float64 `json:"profit"`
 }

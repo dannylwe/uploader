@@ -15,5 +15,8 @@ Note: To run tests locally, uncomment #18 in handlers/render.go and comment out 
 go test -cover ./handlers
 ```
 
+### Test Coverage
+![TestResults](https://github.com/dannylwe/uploader/blob/main/images/tests.PNG)
+
 ### Postman Collection  
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/59b99ec28fe39ad15abe) 

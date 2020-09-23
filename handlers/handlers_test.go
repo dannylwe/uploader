@@ -104,17 +104,52 @@ func TestGetTopFiveProfitableItems(t *testing.T) {
 	}
 }
 
-func TestGetProfitsByDate(t *testing.T) {
+func TestGetProfitsByDate_WrongMethod(t *testing.T) {
 
 	model.SQLConn()
 
-	var jsonStr = []byte(`{"startDate": "2016-01-09", "endDate": "2016-10-19"}`)
-	req, _:= http.NewRequest(http.MethodPost, "/profit", bytes.NewBuffer(jsonStr))
+	req:= httptest.NewRequest(http.MethodGet, "/profit", nil)
 	
 	req.Header.Set("Content-Type", "application/json")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(GetTopFiveProfitableItems)
+	handler := http.HandlerFunc(GetProfitsByDate)
+	handler.ServeHTTP(rr, req)
+	
+	if status := rr.Code; status != http.StatusMethodNotAllowed {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+		status, http.StatusOK)
+	}
+}
+
+func TestGetProfitsByDate(t *testing.T) {
+
+	model.SQLConn()
+	var jsonStr = []byte(`{"startDate": "2016-01-09", "endDate": "2016-10-19"}`)
+	req:= httptest.NewRequest(http.MethodPost, "/profit", bytes.NewBuffer(jsonStr))
+	
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(GetProfitsByDate)
+	handler.ServeHTTP(rr, req)
+	
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+		status, http.StatusOK)
+	}
+}
+
+func TestGetAllRecords(t *testing.T) {
+
+	model.ConnectDatabase()
+
+	req:= httptest.NewRequest(http.MethodGet, "/records",nil)
+	
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(GetAllRecords)
 	handler.ServeHTTP(rr, req)
 	
 	if status := rr.Code; status != http.StatusOK {

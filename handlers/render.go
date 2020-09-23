@@ -1,12 +1,14 @@
-package common
+package handlers
 
 import (
 	"html/template"
 	"net/http"
+	"os"
 )
+var wd, _ = os.Getwd()
 
 // compile template
-var templates = template.Must(template.ParseFiles("public/upload.html"))
+var templates = template.Must(template.ParseFiles("C:/Users/pc/Desktop/projects/uploader/"+ "/public/upload.html"))
 
 // Display template
 func Display(w http.ResponseWriter, page string, data interface{}) {

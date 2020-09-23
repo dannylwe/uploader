@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	// "github.com/danny/services/config"
-	// "github.com/danny/services/handlers"
 	"github.com/danny/services/model"
 )
 
@@ -43,33 +41,33 @@ func TestHealthCheckHandler(t *testing.T) {
     }
 }
 
-// func TestRedirectUpload(t *testing.T) {
+func TestRedirectUpload(t *testing.T) {
 	
-// 	req:= httptest.NewRequest(http.MethodGet, "/", nil)
+	req:= httptest.NewRequest(http.MethodGet, "/", nil)
 	
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(RedirectToUpload)
-// 	handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(RedirectToUpload)
+	handler.ServeHTTP(rr, req)
 	
-// 	if status := rr.Code; status != http.StatusSeeOther {
-// 		t.Errorf("handler returned wrong status code: got %v want %v",
-// 		status, http.StatusOK)
-// 	}
-// }
+	if status := rr.Code; status != http.StatusSeeOther {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+		status, http.StatusOK)
+	}
+}
 
-// func TestUploadHandler(t *testing.T) {
+func TestUploadHandler(t *testing.T) {
 	
-// 	req:= httptest.NewRequest(http.MethodGet, "/upload", nil)
+	req:= httptest.NewRequest(http.MethodGet, "/upload", nil)
 	
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(UploadHandler)
-// 	handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(UploadHandler)
+	handler.ServeHTTP(rr, req)
 	
-// 	if status := rr.Code; status != http.StatusOK {
-// 		t.Errorf("handler returned wrong status code: got %v want %v",
-// 		status, http.StatusOK)
-// 	}
-// }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+		status, http.StatusOK)
+	}
+}
 
 func TestGetTopFiveProfitableItems_WrongMethod(t *testing.T) {
 	

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,10 +12,36 @@ func SetupRoutes() {
 	PORT := ":8080"
 	log.Info("Starting application on port" + PORT)
 
-	http.HandleFunc("/upload", UploadHandler)
-	http.HandleFunc("/", RedirectToUpload)
-	http.HandleFunc("/records", GetAllRecords)
-	http.HandleFunc("/profit", GetProfitsByDate)
-	http.HandleFunc("/topfive", GetTopFiveProfitableItems)
-	http.ListenAndServe(PORT, nil)
+	r := mux.NewRouter()
+	r.Use(CORS)
+
+	r.HandleFunc("/upload", UploadHandler)
+	r.HandleFunc("/", RedirectToUpload)
+	r.HandleFunc("/records", GetAllRecords)
+	r.HandleFunc("/profit", GetProfitsByDate)
+	r.HandleFunc("/topfive", GetTopFiveProfitableItems)
+	http.ListenAndServe(PORT, r)
 }
+
+// CORS Middleware
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Set headers
+		w.Header().Set("Access-Control-Allow-Headers:", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		log.Info("ok")
+
+		// Next
+		next.ServeHTTP(w, r)
+		return
+	})
+}
+

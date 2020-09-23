@@ -20,7 +20,6 @@ var absPath, _ = filepath.Abs("./public/upload.html")
 // for application run
 var templates = template.Must(template.ParseFiles(filepath.Join(newDir, "./public/upload.html")))
 
-
 // Display template
 func Display(w http.ResponseWriter, page string, data interface{}) {
 	templates.ExecuteTemplate(w, page+".html", data)

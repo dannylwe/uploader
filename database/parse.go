@@ -10,7 +10,7 @@ func saveToDatabase(records [][]string) {
 	for _, record := range records[1:] {
 		insertRecord := model.Sales{
 			Region:record[0], Country:record[1], ItemType:record[2], SalesChannel:record[3], 
-			OrderPrice:record[4], OrderDate:record[5], OrderID:record[6], ShipDate:record[7], 
+			OrderPriority:record[4], OrderDate:record[5], OrderID:record[6], ShipDate:record[7], 
 			UnitsSold:record[8], UnitPrice:record[9], TotalRevenue:record[10], TotalCost:record[11], 
 			TotalProfit:record[12]}
 			

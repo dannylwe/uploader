@@ -1,0 +1,37 @@
+language: go
+
+sudo: required
+dist: bionic
+
+go:
+  - 1.14.x
+
+env:
+  - GO111MODULE=on
+
+
+git:
+  depth: 1
+
+services:
+  - mysql
+  - sudo mysql -e 'CREATE DATABASE test;'
+
+
+stages:
+  - name: test
+  - name: push
+    if: fork = false
+  - name: manifest
+    if: fork = false AND tag IS present
+
+before_install:
+  - go get github.com/mattn/goveralls
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - go get github.com/mattn/goveralls
+        - go get -u github.com/rakyll/gotest
+        - go test -v -cover ./handlers

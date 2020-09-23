@@ -20,7 +20,7 @@ func ConnectDatabase() {
 		panic("Failed to connect to database")
 	}
 	log.Info("Successlly connected to database")
-	
+
 	// database.AutoMigrate(&Sales{})
 	DB = database
 	DB.Exec("CREATE TABLE IF NOT EXISTS sales(country VARCHAR(255) NOT NULL, region VARCHAR(255) NOT NULL,item_type VARCHAR(255) NOT NULL,sales_channel VARCHAR(255) NOT NULL,order_priority VARCHAR(255) NOT NULL,order_date DATE NOT NULL,order_id VARCHAR(255) NOT NULL,ship_date DATE NOT NULL,units_sold VARCHAR(255) NOT NULL,unit_price VARCHAR(255) NOT NULL,unit_cost VARCHAR(255) NOT NULL,total_revenue VARCHAR(255) NOT NULL,total_cost VARCHAR(255) NOT NULL,total_profit VARCHAR(255) NOT NULL)")

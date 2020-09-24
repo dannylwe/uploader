@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/dannylwe/uploader.svg?branch=main)](https://travis-ci.com/dannylwe/uploader) [![Maintainability](https://api.codeclimate.com/v1/badges/7d8de23d3cddf3101095/maintainability)](https://codeclimate.com/github/dannylwe/uploader/maintainability)
+[![Build Status](https://travis-ci.com/dannylwe/uploader.svg?branch=main)](https://travis-ci.com/dannylwe/uploader) [![Maintainability](https://api.codeclimate.com/v1/badges/7d8de23d3cddf3101095/maintainability)](https://codeclimate.com/github/dannylwe/uploader/maintainability) [![codecov](https://codecov.io/gh/dannylwe/uploader/branch/main/graph/badge.svg)](https://codecov.io/gh/dannylwe/uploader)
 
 ### How to run the application  
 - Install mysql running on PORT `3306`. Create user `Root` with no password.  

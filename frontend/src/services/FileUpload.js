@@ -1,3 +1,4 @@
+import Axios from "axios";
 import http from "../httpCommon";
 
 const upload = (file, onUploadProgress) => {
@@ -17,12 +18,16 @@ const upload = (file, onUploadProgress) => {
     return http.get("/records");
   };
 
-  const topItems = (startDate, endDate) => {
-      return http.post("/topfive", {startDate, endDate})
+  const topItems = async (startDate, endDate) => {
+      let data = {startDate, endDate}
+      console.log(data)
+      let items = await Axios.post("http://localhost:8080/topfive", data)
+      return items
   }
 
   export default {
     upload,
     getRecords,
+    topItems
   };
   

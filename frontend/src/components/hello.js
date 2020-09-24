@@ -38,6 +38,9 @@ function Hello() {
           .then((records) => {
             setRecords(records.data);
             console.log(records.data)
+            return UploadService.topItems("2005-09-09", "2016-09-09")
+          }).then((profit) => {
+            console.log(profit.data)
           })
           .catch(() => {
             setProgress(0);

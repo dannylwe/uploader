@@ -15,8 +15,6 @@ git:
 
 services:
   - mysql
-  - sudo mysql -e 'CREATE DATABASE test;'
-
 
 stages:
   - name: test
@@ -27,6 +25,7 @@ stages:
 
 before_install:
   - go get github.com/mattn/goveralls
+  - mysql -u root -e 'CREATE DATABASE test;'
 
 jobs:
   include:

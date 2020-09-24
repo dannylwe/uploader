@@ -25,9 +25,17 @@ const upload = (file, onUploadProgress) => {
       return items
   }
 
+  const profitByDate = async (startDate, endDate) => {
+    let data = {startDate, endDate}
+    console.log(data)
+    let items = await Axios.post("http://localhost:8080/profit", data)
+    return items
+}
+
   export default {
     upload,
     getRecords,
-    topItems
+    topItems,
+    profitByDate
   };
   

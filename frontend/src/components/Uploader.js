@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import UploadService from "../services/FileUpload";
 import Dashboard from "./Dashboard";
 import TopItems from "./TopProfitableItems";
+import { FaSpinner } from 'react-icons/fa';
 
 function Uploader() {
     const [selectedFiles, setSelectedFiles] = useState(undefined);
@@ -10,7 +11,8 @@ function Uploader() {
     const [message, setMessage] = useState("");
     const [records, setRecords] = useState([]);
     const [profit, setProfit] = useState([]);
-
+    const [loading, setLoading] = useState(false)
+    const [loading2, setLoading2] = useState(false)
     // useEffect(() => {
     //     UploadService.getFiles().then((response) => {
     //       setRecords(response.data);
@@ -31,18 +33,24 @@ function Uploader() {
           setProgress(Math.round((100 * event.loaded) / event.total));
         })
           .then((response) => {
+            setLoading(true)
             setMessage(response.data);
             console.log(response.data)
             return UploadService.getRecords();
           })
           .then((records) => {
             setRecords(records.data);
+            setLoading(false)
+            setLoading2(true)
             console.log(records.data)
             return UploadService.topItems("2005-09-09", "2016-09-09")
           }).then((profit) => {
             console.log(profit.data)
             setProfit(profit.data)
-            
+            setLoading2(false)
+            return UploadService.profitByDate("2005-09-09", "2016-09-09")
+          }).then((profitDate) => {
+            setMessage(profitDate.data)
           })
           .catch(() => {
             setProgress(0);
@@ -82,8 +90,8 @@ function Uploader() {
         Upload
       </button>
 
-      {profit.length > 0 && <TopItems items={profit} />}
-      {records.length > 0 && <Dashboard records={records} />}
+      {loading ? <FaSpinner className="fa-spin" /> : profit.length > 0 && <TopItems items={profit} />}
+      {loading2 ? <FaSpinner className="fa-spin" /> : records.length > 0 && <Dashboard records={records} profit={message} />}
 
     </div>
     );

@@ -26,6 +26,7 @@ stages:
 before_install:
   - go get github.com/mattn/goveralls
   - mysql -u root -e 'CREATE DATABASE test;'
+  - mysql -u root test < model/sales.sql
 
 jobs:
   include:

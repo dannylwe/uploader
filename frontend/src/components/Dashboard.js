@@ -8,6 +8,7 @@ function Dashboard({ records }) {
             {/* dashboards */}
             <div className="dashboards">
                 <div className="records">
+                    <p>All records snapshot</p>
                     <table className="table table-striped">
                         <thead>
                             <tr>
@@ -36,7 +37,7 @@ function Dashboard({ records }) {
                     </table>
                 </div>
                 
-                <div className="profits">Hello</div>
+                {/* <div className="profits">Hello</div> */}
             </div>
         </div>
     )

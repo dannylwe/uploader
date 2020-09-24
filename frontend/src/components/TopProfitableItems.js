@@ -1,9 +1,25 @@
 import React from 'react'
 
-function TopProfitableItems() {
+function TopProfitableItems({ items }) {
     return (
         <div>
-            Hello
+            <p>Top Five Profitable</p>
+            <table className="table">
+            <thead className="thead-dark">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items.map(item =>
+                <tr>
+                    <td>{item.name}</td>
+                    <td>{item.profit}</td>
+                </tr>
+                )}
+            </tbody>
+            </table>
         </div>
     )
 }

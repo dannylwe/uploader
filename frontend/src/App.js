@@ -3,7 +3,7 @@ import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 
 import FileUpload from "./services/FileUpload";
-import Hello from "./components/hello";
+import Uploader from "./components/Uploader";
 import Dashboard from "./components/Dashboard";
 
 function App() {
@@ -13,7 +13,7 @@ function App() {
         <h4>React Hooks File Upload</h4>
       </div>
 
-      <Hello />
+      <Uploader />
     </div>
   );
 }

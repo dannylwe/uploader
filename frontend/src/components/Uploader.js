@@ -3,13 +3,13 @@ import UploadService from "../services/FileUpload";
 import Dashboard from "./Dashboard";
 import TopItems from "./TopProfitableItems";
 
-function Hello() {
+function Uploader() {
     const [selectedFiles, setSelectedFiles] = useState(undefined);
     const [currentFile, setCurrentFile] = useState(undefined);
     const [progress, setProgress] = useState(0);
     const [message, setMessage] = useState("");
-  
     const [records, setRecords] = useState([]);
+    const [profit, setProfit] = useState([]);
 
     // useEffect(() => {
     //     UploadService.getFiles().then((response) => {
@@ -41,6 +41,8 @@ function Hello() {
             return UploadService.topItems("2005-09-09", "2016-09-09")
           }).then((profit) => {
             console.log(profit.data)
+            setProfit(profit.data)
+            
           })
           .catch(() => {
             setProgress(0);
@@ -80,10 +82,11 @@ function Hello() {
         Upload
       </button>
 
+      {profit.length > 0 && <TopItems items={profit} />}
       {records.length > 0 && <Dashboard records={records} />}
-      <TopItems />
+
     </div>
     );
   }
 
-export default Hello;
+export default Uploader;

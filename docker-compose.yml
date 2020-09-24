@@ -1,6 +1,15 @@
 version: '3.3'
 services:
   
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    ports:
+      - '9009:80'
+    networks: 
+      - elk
+
   uploader:
     build:
       context: .
@@ -29,6 +38,8 @@ services:
       # Opens port 3306 on the container
       - '3306'
       # Where our data will be persisted
+    depends_on: 
+      - frontend
     networks: 
       - elk
 

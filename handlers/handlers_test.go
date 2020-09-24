@@ -10,8 +10,6 @@ import (
 	"github.com/danny/services/model"
 )
 
-
-
 func TestMain(m *testing.M) {
 	code := m.Run()
 	os.Exit(code)
@@ -63,7 +61,7 @@ func TestUploadHandler(t *testing.T) {
 	handler := http.HandlerFunc(UploadHandler)
 	handler.ServeHTTP(rr, req)
 	
-	if status := rr.Code; status != http.StatusOK {
+	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 		status, http.StatusOK)
 	}

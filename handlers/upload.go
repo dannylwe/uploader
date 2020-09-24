@@ -13,6 +13,7 @@ import (
 )
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
+	// cors(w,r)
 	var maxUploadSize int64
 	maxUploadSize = 15 * 1024000
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
@@ -68,3 +69,9 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	return
 }
+
+// func cors(w http.ResponseWriter, req *http.Request) {
+// 	(w).Header().Set("Access-Control-Allow-Origin", "*")
+//     (w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+//     (w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+// }

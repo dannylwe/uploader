@@ -1,0 +1,17 @@
+.dashboards {
+    display: flex;
+    flex-direction: column;
+}
+
+.fa-spin {
+    margin-left: 20px;
+    animation: fa-spin 2s infinite linear;
+  }
+  @keyframes fa-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(359deg);
+    }
+  }

@@ -28,10 +28,13 @@ before_install:
   - mysql -u root -e 'CREATE DATABASE test;'
   - mysql -u root test < model/sales.sql
 
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
 jobs:
   include:
     - stage: test
       script:
         - go get github.com/mattn/goveralls
         - go get -u github.com/rakyll/gotest
-        - go test -v -cover ./handlers
+        - go test ./handlers/ -coverprofile coverage.out

@@ -15,8 +15,6 @@ git:
 
 services:
   - mysql
-  - sudo mysql -e 'CREATE DATABASE test;'
-
 
 stages:
   - name: test
@@ -27,6 +25,11 @@ stages:
 
 before_install:
   - go get github.com/mattn/goveralls
+  - mysql -u root -e 'CREATE DATABASE test;'
+  - mysql -u root test < model/sales.sql
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 jobs:
   include:
@@ -34,4 +37,4 @@ jobs:
       script:
         - go get github.com/mattn/goveralls
         - go get -u github.com/rakyll/gotest
-        - go test -v -cover ./handlers
+        - go test ./handlers/ -coverprofile coverage.out

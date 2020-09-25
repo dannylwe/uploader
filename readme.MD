@@ -1,16 +1,34 @@
 [![Build Status](https://travis-ci.com/dannylwe/uploader.svg?branch=main)](https://travis-ci.com/dannylwe/uploader) [![Maintainability](https://api.codeclimate.com/v1/badges/7d8de23d3cddf3101095/maintainability)](https://codeclimate.com/github/dannylwe/uploader/maintainability) [![codecov](https://codecov.io/gh/dannylwe/uploader/branch/main/graph/badge.svg)](https://codecov.io/gh/dannylwe/uploader)
 
 ### How to run the application  
-- Install mysql running on PORT `3306`. Create user `Root` with no password.  
+- Install mysql running on PORT `3306`. Create user `root` with no password.  
 - Install golang. See [HERE](https://golang.org/doc/install)
 - clone repo.
 - run `cd uploader`  
 - run `go run main.go`  
 - The application runs on PORT `8080`
-- The endpoints of interest have been documented in the Postman collection in this repo.
+- The endpoints of interest have been documented in the Postman collection in this repo.  
 
-#### Run with docker compose  [NOT working]
+For frontend:  
+- run `cd uploader/frontend` in a separate terminal from root of repo
+- run `npm install`
+- create `.env` and set `PORT=9005`
+- run `npm start`
+- upload valid .csv
+
+### Run with docker compose  [NOT working]
 - start application `docker-compose -f docker-compose.yml up`
+
+### Run with Docker  
+- Install mysql running on PORT `3306`. Create user `root` with no password.  
+- clone repo.
+- run `cd uploader` 
+- run `docker build -t uploader .` for backend build
+- run `cd uploader/frontend` in a separate terminal from root of repo
+- run `docker build -t frontend .` for frontend build 
+- run frontend `docker run -it -p 9005:80 --rm frontend`
+- run backend `docker run -it -p 8080:8080 --rm uploader`
+- upload valid .csv
 
 ### Run tests with coverage
 Note: To run tests locally, uncomment #18 in handlers/render.go and comment out #21 in same file. Revert to run the application.
@@ -23,3 +41,24 @@ go test -cover ./handlers
 
 ### Postman Collection  
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/59b99ec28fe39ad15abe) 
+
+### Part 2: Automation from ERP 
+![Automation](https://github.com/dannylwe/uploader/blob/develop/images/Part2.PNG)
+
+### Design Choices
+- Backend: Golang  
+Golang was chosen as the backend langauge because of it is natively fast, easy to write and it comes out of the box with Concurrency built-in. Every request to the backend API goes off on it's own thread.  
+
+Golang also produces very small Docker images. In the image below, the entire backend is only 10MB. This translates to quick and easy deployments. From a business perspective, less resources are used. If this service is replicated `100X`, it will only consume 100MB.  
+
+![image-deployment](https://github.com/dannylwe/uploader/blob/develop/images/Image%20Info.PNG)
+
+- Frontend: React  
+React.js was chosen for the frontend because it has many packages that can be added to easily extend functionality. The frontend codebase however becomes complex.  
+
+- Docker  
+In a microservices based eco-system, Docker is the backbone. For this project, docker is the intended module of deployment. The frontend and backend can be built separetely using the Dockerfiles in their respective repositories.
+
+### Known Bugs  
+- The desired date on the date picker has to be clicked twice to get correct values.  
+- The results from the date picker are appended on top of the previous results. This can be handled with improved conditional rendering or a state management like react -redux.

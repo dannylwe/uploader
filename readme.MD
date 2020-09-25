@@ -9,7 +9,7 @@
 - The application runs on PORT `8080`
 - The endpoints of interest have been documented in the Postman collection in this repo.
 
-#### Run with docker  [NOT working]
+#### Run with docker compose  [NOT working]
 - start application `docker-compose -f docker-compose.yml up`
 
 ### Run tests with coverage

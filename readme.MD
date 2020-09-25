@@ -2,7 +2,7 @@
 
 ### How to run the application  
 #### 1. SYSTEM INSTALL
-- Install mysql running on PORT `3306`. Create user `root` with no password.  
+- Install mysql running on PORT `3306`. Create user `root` with no password. Create database `test`.  
 - Install golang. See [HERE](https://golang.org/doc/install)
 - clone repo.
 - run `cd uploader` from root of repo
@@ -11,6 +11,7 @@
 - The endpoints of interest have been documented in the Postman collection in this repo.  
 
 For frontend:  
+- Install `npm` from [HERE](https://nodejs.org/en/download/)
 - run `cd uploader/frontend` in a separate terminal from root of repo
 - run `npm install`
 - create `.env` and set `PORT=9005`
@@ -18,7 +19,7 @@ For frontend:
 - upload valid .csv on frontend
 
 ### 2. Run with Docker  
-- Install mysql running on PORT `3306`. Create user `root` with no password.  
+- Install mysql running on PORT `3306`. Create user `root` with no password. Create database `test`.   
 - clone repo.
 - run `cd uploader` 
 - run `docker build -t uploader .` for backend build

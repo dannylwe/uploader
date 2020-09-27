@@ -26,7 +26,7 @@ For frontend:
 - run `cd uploader/frontend` in a separate terminal from root of repo
 - run `docker build -t frontend .` for frontend build 
 - run frontend `docker run -it -p 9005:80 --rm frontend`
-- run backend `docker run -it -p 8080:8080 --rm uploader`
+- run backend `docker run -it -p 8080:8080  -p 3306:3306 --rm uploader`
 - upload valid .csv to frontend.
 
 ### 3. Run with docker compose  [NOT working]
